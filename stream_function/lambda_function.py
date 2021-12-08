@@ -15,6 +15,7 @@ class TwitterStream:
         }
         self._values = values
         self._bucket = bucket
+        self._report = {}
 
     def _get_rules(self):
         return requests.get(
@@ -43,7 +44,7 @@ class TwitterStream:
             Body=str(text).encode()
         )
 
-    def start(self):
+    def start(self, context):
 
         # RULES ================================================================
 
@@ -77,6 +78,7 @@ class TwitterStream:
                 'rule/'+rule['id']+'.json',
                 rule
             )
+            self._report[rule] = 0
 
         # STREAM ===============================================================
 
@@ -93,6 +95,10 @@ class TwitterStream:
                         tweet['data']['id']+'.json',
                     tweet['data']
                 )
+                self._report[rule] += 1
+            
+            print(self._report)
+            print(context)
 
 def lambda_handler(event, context):
 
@@ -100,4 +106,4 @@ def lambda_handler(event, context):
         token = event['token'],
         values = event['values'],
         bucket = os.environ['BUCKET']
-    ).start()
+    ).start(context)

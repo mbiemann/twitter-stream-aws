@@ -47,6 +47,7 @@ Resources:
           Stream:
             Type: Task
             Resource: !Sub ${Function.Arn}
+            ResultPath: $.stream
             Retry:
               - ErrorEquals: [States.ALL]
                 MaxAttempts: 0
@@ -54,13 +55,13 @@ Resources:
                 BackoffRate: 1
             Catch:
               - ErrorEquals: [States.ALL]
-                ResultPath: $
+                ResultPath: $.catch
                 Next: Check
             End: True
           Check:
             Type: Choice
             Choices:
-              - Variable: $.Cause
+              - Variable: $.catch.Cause
                 StringMatches: "*Task timed out after*"
                 Next: Stream
             Default:  Email
