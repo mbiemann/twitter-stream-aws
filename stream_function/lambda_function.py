@@ -78,7 +78,7 @@ class TwitterStream:
                 'rule/'+rule['id']+'.json',
                 rule
             )
-            self._report[rule] = 0
+            self._report[rule['id']] = 0
 
         # STREAM ===============================================================
 
@@ -95,7 +95,7 @@ class TwitterStream:
                         tweet['data']['id']+'.json',
                     tweet['data']
                 )
-                self._report[rule] += 1
+                self._report[rule['id']] += 1
             
             print(self._report)
             print(context)
