@@ -26,9 +26,10 @@ jobs:
       - shell: bash
         run: |
           aws cloudformation deploy \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+            --no-fail-on-empty-changeset \
             --template-file aws-cfstack_pkgd.yaml \
-            --stack-name ${{ secrets.AWS_STACK_NAME }} \
             --s3-bucket ${{ secrets.AWS_INFRA_BUCKET }} \
             --s3-prefix package/${{ secrets.AWS_STACK_NAME }} \
-            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
-            --no-fail-on-empty-changeset
+            --stack-name ${{ secrets.AWS_STACK_NAME }} \
+            --parameter-overrides Email=${{ secrets.EMAIL }}

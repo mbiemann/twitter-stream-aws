@@ -1,6 +1,19 @@
 Transform: AWS::Serverless-2016-10-31
 
+Parameters:
+
+  Email:
+    Type: String
+
 Resources:
+
+  Topic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Ref AWS::StackName
+      Subscription:
+        - Protocol: email
+          Endpoint: !Ref Email
 
   Bucket:
     Type: AWS::S3::Bucket
@@ -32,6 +45,22 @@ Resources:
           Stream:
             Type: Task
             Resource: !Sub ${Function.Arn}
+            Retry:
+              - ErrorEquals: [States.ALL]
+                IntervalSeconds: 0
+                MaxAttempts: 10
+                BackoffRate: 0
+            Catch:
+              - ErrorEquals: [States.ALL]
+                Next: Email
+            Next: Email
+          Email:
+            Type: Task
+            Resource: arn:aws:states:::sns:publish
+            Parameters:
+              TopicArn: !Ref Topic
+              Subject: !Ref AWS::StackName
+              Message: State Machine was ended.
             End: True
       Policies:
         - Version: 2012-10-17
