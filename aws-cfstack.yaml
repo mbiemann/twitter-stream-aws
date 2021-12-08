@@ -49,7 +49,7 @@ Resources:
             Resource: !Sub ${Function.Arn}
             Retry:
               - ErrorEquals: [States.ALL]
-                MaxAttempts: 1
+                MaxAttempts: 0
                 IntervalSeconds: 0
                 BackoffRate: 1
             Catch:

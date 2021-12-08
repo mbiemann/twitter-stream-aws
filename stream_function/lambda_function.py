@@ -52,7 +52,7 @@ class TwitterStream:
         rules_delete = []
 
         # get
-        for rule in self._get_rules(self).json()['data']:
+        for rule in self._get_rules().json()['data']:
             if rule['value'] not in self._values:
                 rules_delete.append(rule['id'])
             else:
@@ -60,7 +60,7 @@ class TwitterStream:
 
         # delete
         if len(rules_delete) > 0:
-            resp = self._post_rules(self,{"delete":{"ids":rules_delete}})
+            resp = self._post_rules({"delete":{"ids":rules_delete}})
             print(f'DELETE STREAM RULES: {resp.text}')
 
         # add
@@ -68,23 +68,23 @@ class TwitterStream:
             if value not in rules_value:
                 rules_add.append({"value":value})
         if len(rules_add) > 0:
-            resp = self._post_rules(self,{"add":rules_add})
+            resp = self._post_rules({"add":rules_add})
             print(f'ADD STREAM RULES: {resp.text}')
 
         # write
-        for rule in self._get_rules(self).json()['data']:
+        for rule in self._get_rules().json()['data']:
             self._write(self, 'rule/'+rule['id']+'.json', rule)
 
         # STREAM ===============================================================
 
-        for line in self._get_stream(self).iter_lines():
+        for line in self._get_stream().iter_lines():
             if not line:
                 continue
 
             tweet = json.loads(line)
 
             for rule in tweet['matching_rules']:
-                self._write(self,
+                self._write(
                     'tweet/'+rule['id'] + \
                         datetime.datetime.utcnow().strftime('/%Y/%m/%d/%H/%M/%Y%m%d%H%M%S%f_') + \
                         tweet['data']['id']+'.json',
