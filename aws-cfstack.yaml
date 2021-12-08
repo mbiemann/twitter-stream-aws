@@ -8,16 +8,24 @@ Resources:
   Function:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: !Ref AWS::StackName
       CodeUri: ./stream_function
       Handler: lambda_function.lambda_handler
       Runtime: python3.8
       Environment:
         Variables:
           BUCKET: !Ref Bucket
+      Policies:
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: "*"
+              Resource: "*"
 
   StateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
+      Name: !Ref AWS::StackName
       Definition:
         StartAt: Stream
         States:
