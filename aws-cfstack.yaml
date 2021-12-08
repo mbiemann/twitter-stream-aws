@@ -48,30 +48,17 @@ Resources:
             Type: Task
             Resource: !Sub ${Function.Arn}
             ResultPath: $.stream
-            Retry:
-              - ErrorEquals: [States.ALL]
-                MaxAttempts: 0
-                IntervalSeconds: 0
-                BackoffRate: 1
             Catch:
               - ErrorEquals: [States.ALL]
-                ResultPath: $.catch
-                Next: Check
-            End: True
-          Check:
-            Type: Choice
-            Choices:
-              - Variable: $.catch.Cause
-                StringMatches: "*Task timed out after*"
-                Next: Stream
-            Default:  Email
+                Next: Email
+            Next: Stream
           Email:
             Type: Task
             Resource: arn:aws:states:::sns:publish
             Parameters:
               TopicArn: !Ref Topic
               Subject: !Ref AWS::StackName
-              Message: State Machine was ended.
+              Message.$: $.Cause
             End: True
       Policies:
         - Version: 2012-10-17
