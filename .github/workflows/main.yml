@@ -17,6 +17,12 @@ jobs:
 
       - shell: bash
         run: |
+          cd ./stream_function
+          pip install -r requirements.txt -t ./
+          cd ./..
+
+      - shell: bash
+        run: |
           aws cloudformation package \
             --template-file aws-cfstack.yaml \
             --output-template-file aws-cfstack_pkgd.yaml \
