@@ -6,7 +6,7 @@ import requests
 
 class TwitterStream:
 
-    def __init__(self, token, values, bucket):
+    def __init__(self, token, values, bucket, context):
         self._s3 = boto3.client('s3')
         self._api_url = 'https://api.twitter.com/2/tweets/search/stream'
         self._headers = {
@@ -15,6 +15,7 @@ class TwitterStream:
         }
         self._values = values
         self._bucket = bucket
+        self._context = context
         self._report = {}
 
     def _get_rules(self):
@@ -44,7 +45,7 @@ class TwitterStream:
             Body=str(text).encode()
         )
 
-    def start(self, context):
+    def start(self):
 
         # RULES ================================================================
 
@@ -96,14 +97,19 @@ class TwitterStream:
                     tweet['data']
                 )
                 self._report[rule['id']] += 1
-            
+
             print(self._report)
-            print(context)
+            print(self._context.get_remaining_time_in_millis())
+
+            # if self._context.get_remaining_time_in_millis() <= 1000:
+            #     break
+
+        return self._report
 
 def lambda_handler(event, context):
-
-    TwitterStream(
+    return TwitterStream(
         token = event['token'],
         values = event['values'],
-        bucket = os.environ['BUCKET']
-    ).start(context)
+        bucket = os.environ['BUCKET'],
+        context = context
+    ).start()
