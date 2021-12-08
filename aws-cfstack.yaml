@@ -54,8 +54,16 @@ Resources:
                 BackoffRate: 1
             Catch:
               - ErrorEquals: [States.ALL]
-                Next: Email
-            Next: Email
+                ResultPath: $
+                Next: Check
+            End: True
+          Check:
+            Type: Choice
+            Choices:
+              - Variable: $.Cause
+                StringMatches: Task timed out after
+                Next: Stream
+            Default:  Email
           Email:
             Type: Task
             Resource: arn:aws:states:::sns:publish
