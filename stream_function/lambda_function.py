@@ -5,7 +5,7 @@ import os
 import requests
 
 class TwitterStream:
-    
+
     def __init__(self, token, values, bucket):
         self._s3 = boto3.client('s3')
         self._api_url = 'https://api.twitter.com/2/tweets/search/stream'
@@ -62,7 +62,7 @@ class TwitterStream:
         if len(rules_delete) > 0:
             resp = self._post_rules(self,{"delete":{"ids":rules_delete}})
             print(f'DELETE STREAM RULES: {resp.text}')
-            
+
         # add
         for value in self._values:
             if value not in rules_value:

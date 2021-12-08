@@ -5,7 +5,7 @@ Resources:
   Bucket:
     Type: AWS::S3::Bucket
 
-  StreamFunction:
+  Function:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./stream_function
@@ -14,3 +14,13 @@ Resources:
       Environment:
         Variables:
           BUCKET: !Ref Bucket
+
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Definition:
+        StartAt: Stream
+        States:
+          Stream:
+            Type: Task
+            Resource: !Sub ${Function.Arn}
