@@ -22,9 +22,11 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: !Ref AWS::StackName
+      Runtime: python3.8
       CodeUri: ./stream_function
       Handler: lambda_function.lambda_handler
-      Runtime: python3.8
+      MemorySize: 128
+      Timeout: 60
       Environment:
         Variables:
           BUCKET: !Ref Bucket
@@ -47,8 +49,8 @@ Resources:
             Resource: !Sub ${Function.Arn}
             Retry:
               - ErrorEquals: [States.ALL]
-                IntervalSeconds: 0
                 MaxAttempts: 10
+                IntervalSeconds: 0
                 BackoffRate: 1
             Catch:
               - ErrorEquals: [States.ALL]
