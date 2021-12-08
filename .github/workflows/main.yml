@@ -8,20 +8,22 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - name: Configure AWS Credentials
+      - name: Install Python Requirements
+        shell: bash
+        run: |
+          cd ./stream_function
+          pip install -r requirements.txt -t ./
+          cd ./..
+
+      - name: AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: ${{ secrets.AWS_REGION }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - shell: bash
-        run: |
-          cd ./stream_function
-          pip install -r requirements.txt -t ./
-          cd ./..
-
-      - shell: bash
+      - name: AWS CloudFormation Package
+        shell: bash
         run: |
           aws cloudformation package \
             --template-file aws-cfstack.yaml \
@@ -29,7 +31,8 @@ jobs:
             --s3-bucket ${{ secrets.AWS_INFRA_BUCKET }} \
             --s3-prefix package/${{ secrets.AWS_STACK_NAME }}
 
-      - shell: bash
+      - name: AWS CloudFormation Deploy
+        shell: bash
         run: |
           aws cloudformation deploy \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \

@@ -93,10 +93,8 @@ class TwitterStream:
 
 def lambda_handler(event, context):
 
-    print(event)
-
-    # TwitterStream(
-    #     token = event['token'],
-    #     values = event['values'],
-    #     bucket = os.environ['BUCKET']
-    # ).start()
+    TwitterStream(
+        token = event['token'],
+        values = event['values'],
+        bucket = os.environ['BUCKET']
+    ).start()
