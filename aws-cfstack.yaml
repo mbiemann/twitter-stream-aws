@@ -7,6 +7,29 @@ Parameters:
 
 Resources:
 
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AWS::StackName}-${AWS::Region}
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - glue.amazonaws.com
+                - lambda.amazonaws.com
+                - states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: admin
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: "*"
+                Resource: "*"
+
   Topic:
     Type: AWS::SNS::Topic
     Properties:
@@ -27,20 +50,16 @@ Resources:
       Handler: lambda_function.lambda_handler
       MemorySize: 128
       Timeout: 60
+      Role: !Sub ${Role.Arn}
       Environment:
         Variables:
           BUCKET: !Ref Bucket
-      Policies:
-        - Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: "*"
-              Resource: "*"
 
   StateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
       Name: !Ref AWS::StackName
+      Role: !Sub ${Role.Arn}
       Definition:
         StartAt: Stream
         States:
@@ -60,9 +79,28 @@ Resources:
               Subject: !Ref AWS::StackName
               Message.$: $.Cause
             End: True
-      Policies:
-        - Version: 2012-10-17
-          Statement:
-            - Effect: Allow
-              Action: "*"
-              Resource: "*"
+
+  Streaming:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Ref AWS::StackName
+      GlueVersion: 3.0
+      MaxCapacity: 2
+      MaxRetries: 0
+      Role: !Sub ${Role.Arn}
+      Timeout: 15
+      WorkerType: Standard
+      NumberOfWorkers: 2
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      Command:
+        Name: gluestreaming
+        PythonVersion: 3
+        ScriptLocation: !Sub s3://${Bucket}/infra-artifacts/streaming_job/glue_script.py
+      DefaultArguments:
+        --enable-glue-datacatalog: true
+
+Outputs:
+
+  BucketName:
+    Value: !Ref Bucket

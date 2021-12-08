@@ -6,7 +6,7 @@ import requests
 
 class TwitterStream:
 
-    def __init__(self, token, values, bucket, context):
+    def __init__(self, token, values, report, bucket, context):
         self._s3 = boto3.client('s3')
         self._api_url = 'https://api.twitter.com/2/tweets/search/stream'
         self._headers = {
@@ -16,7 +16,7 @@ class TwitterStream:
         self._values = values
         self._bucket = bucket
         self._context = context
-        self._report = {}
+        self._report = report
 
     def _get_rules(self):
         return requests.get(
@@ -79,7 +79,8 @@ class TwitterStream:
                 'rule/'+rule['id']+'.json',
                 rule
             )
-            self._report[rule['id']] = {"value":rule['value'],"count":0}
+            if rule['id'] not in self._report:
+                self._report[rule['id']] = {"value":rule['value'],"count":0}
 
         # STREAM ===============================================================
 
@@ -113,6 +114,7 @@ def lambda_handler(event, context):
     return TwitterStream(
         token = event['token'],
         values = event['values'],
+        report = event['stream'] if 'stream' in event else {},
         bucket = os.environ['BUCKET'],
         context = context
     ).start()

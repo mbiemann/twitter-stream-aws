@@ -42,3 +42,11 @@ jobs:
             --s3-prefix package/${{ secrets.AWS_STACK_NAME }} \
             --stack-name ${{ secrets.AWS_STACK_NAME }} \
             --parameter-overrides Email=${{ secrets.EMAIL }}
+
+      - name: Infra Artifacts
+        shell: bash
+        run: |
+          aws cloudformation describe-stacks --stack-name ${{ secrets.AWS_STACK_NAME }} | \
+            jq -r '.Stacks[0].Outputs' > aws-cfstack-outputs.json
+          BUCKET_NAME=$(jq -r '.[] | select(.OutputKey == "BucketName") | .OutputValue' aws-cfstack-outputs.json)
+          aws s3 cp ./streaming_job/ s3://$BUCKET_NAME/infra-artifacts/streaming_job/ --recursive
