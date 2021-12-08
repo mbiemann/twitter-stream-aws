@@ -1,5 +1,6 @@
 name: deploy
 on: [push,workflow_dispatch]
+concurrency: 0
 jobs:
   build:
     runs-on: ubuntu-latest
