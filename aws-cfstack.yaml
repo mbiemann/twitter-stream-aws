@@ -49,7 +49,7 @@ Resources:
               - ErrorEquals: [States.ALL]
                 IntervalSeconds: 0
                 MaxAttempts: 10
-                BackoffRate: 0
+                BackoffRate: 1
             Catch:
               - ErrorEquals: [States.ALL]
                 Next: Email
