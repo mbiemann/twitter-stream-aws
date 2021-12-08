@@ -15,12 +15,19 @@ Resources:
         Variables:
           BUCKET: !Ref Bucket
 
-  # StateMachine:
-  #   Type: AWS::Serverless::StateMachine
-  #   Properties:
-  #     Definition:
-  #       StartAt: Stream
-  #       States:
-  #         Stream:
-  #           Type: Task
-  #           Resource: !Sub ${Function.Arn}
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Definition:
+        StartAt: Stream
+        States:
+          Stream:
+            Type: Task
+            Resource: !Sub ${Function.Arn}
+            End: True
+      Policies:
+        - Version: 2012-10-17
+          Statement:
+            - Effect: Allow
+              Action: "*"
+              Resource: "*"
