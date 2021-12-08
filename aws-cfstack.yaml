@@ -89,8 +89,6 @@ Resources:
       MaxRetries: 0
       Role: !Sub ${Role.Arn}
       Timeout: 15
-      WorkerType: Standard
-      NumberOfWorkers: 2
       ExecutionProperty:
         MaxConcurrentRuns: 1
       Command:
