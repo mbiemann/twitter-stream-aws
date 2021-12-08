@@ -61,7 +61,7 @@ Resources:
             Type: Choice
             Choices:
               - Variable: $.Cause
-                StringMatches: Task timed out after
+                StringMatches: "*Task timed out after*"
                 Next: Stream
             Default:  Email
           Email:
