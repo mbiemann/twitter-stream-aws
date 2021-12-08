@@ -79,16 +79,18 @@ class TwitterStream:
                 'rule/'+rule['id']+'.json',
                 rule
             )
-            self._report[rule['id']] = 0
+            self._report[rule['id']] = {"value":rule['value'],"count":0}
 
         # STREAM ===============================================================
 
+        time_max = 0
         for line in self._get_stream().iter_lines():
             if not line:
                 continue
 
-            tweet = json.loads(line)
+            time_start = self._context.get_remaining_time_in_millis()
 
+            tweet = json.loads(line)
             for rule in tweet['matching_rules']:
                 self._write(
                     'tweet/'+rule['id'] + \
@@ -96,13 +98,14 @@ class TwitterStream:
                         tweet['data']['id']+'.json',
                     tweet['data']
                 )
-                self._report[rule['id']] += 1
+                self._report[rule['id']]['count'] += 1
 
-            print(self._report)
-            print(self._context.get_remaining_time_in_millis())
-
-            # if self._context.get_remaining_time_in_millis() <= 1000:
-            #     break
+            time_end = self._context.get_remaining_time_in_millis()
+            if time_end <= (time_max * 3):
+                break
+            time_spent = time_start - time_end
+            if time_spent > time_max:
+                time_max = time_spent
 
         return self._report
 
