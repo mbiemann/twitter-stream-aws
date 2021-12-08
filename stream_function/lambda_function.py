@@ -4,111 +4,97 @@ import json
 import os
 import requests
 
-bucket = os.environ['BUCKET']
-
-def rules(token, values):
-
-    rules_add = []
-    rules_value = []
-    rules_delete = []
-
-    # get
-    resp = requests.get(
-        url='https://api.twitter.com/2/tweets/search/stream/rules',
-        headers={
+class TwitterStream:
+    
+    def __init__(self, token, values, bucket):
+        self._s3 = boto3.client('s3')
+        self._api_url = 'https://api.twitter.com/2/tweets/search/stream'
+        self._headers = {
             "Content-type": "application/json",
             "Authorization": f'Bearer {token}'
         }
-    )
-    for rule in resp.json()['data']:
-        if rule['value'] not in values:
-            rules_delete.append(rule['id'])
-        else:
-            rules_value.append(rule['value'])
+        self._values = values
+        self._bucket = bucket
 
-    # delete
-    if len(rules_delete) > 0:
-        resp = requests.post(
-            url='https://api.twitter.com/2/tweets/search/stream/rules',
-            headers={
-                "Content-type": "application/json",
-                "Authorization": f'Bearer {token}'
-            },
-            data=json.dumps({"delete":{"ids":rules_delete}})
-        )
-        print(f'DELETE STREAM RULES: {resp.text}')
-    
-    # add
-    for value in values:
-        if value not in rules_value:
-            rules_add.append({"value":value})
-    if len(rules_add) > 0:
-        resp = requests.post(
-            url='https://api.twitter.com/2/tweets/search/stream/rules',
-            headers={
-                "Content-type": "application/json",
-                "Authorization": f'Bearer {token}'
-            },
-            data=json.dumps({"add":rules_add})
-        )
-        print(f'ADD STREAM RULES: {resp.text}')
-    
-    # put s3
-    resp = requests.get(
-        url='https://api.twitter.com/2/tweets/search/stream/rules',
-        headers={
-            "Content-type": "application/json",
-            "Authorization": f'Bearer {token}'
-        }
-    )
-    for rule in resp.json()['data']:
-        boto3.client('s3').put_object(
-            Bucket=bucket,
-            Key='rule/'+rule['id']+'.json',
-            Body=str(rule).encode()
+    def _get_rules(self):
+        return requests.get(
+            headers=self._headers,
+            url=self._api_url+'/rules'
         )
 
-def stream(token):
+    def _post_rules(self, data):
+        return requests.post(
+            headers=self._headers,
+            url=self._api_url+'/rules',
+            data=json.dumps(data)
+        )
 
-    # get stream
-    resp = requests.get(
-        url='https://api.twitter.com/2/tweets/search/stream',
-        headers={
-            "Content-type": "application/json",
-            "Authorization": f'Bearer {token}'
-        },
-        stream=True
-    )
-    
-    # iteration
-    for line in resp.iter_lines():
-        if not line:
-            continue
+    def _get_stream(self):
+        return requests.get(
+            headers=self._headers,
+            url=self._api_url,
+            stream=True
+        )
 
-        tweet = json.loads(line)
-        
-        # rule per folder
-        for rule in tweet['matching_rules']:
+    def _write(self, key, text):
+        self._s3.put_object(
+            Bucket=self._bucket,
+            Key=key,
+            Body=str(text).encode()
+        )
 
-            # Put object to S3 bucket
-            boto3.client('s3').put_object(
-                Bucket=bucket,
-                Key='tweet/'+rule['id']+datetime.datetime.utcnow().strftime('/%Y/%m/%d/%H/%M/%Y%m%d%H%M%S%f_')+ \
-                    tweet['data']['id']+'.json',
-                Body=str(tweet['data']).encode()
-            )
+    def start(self):
 
-def main(token, values):
+        # RULES ================================================================
 
-    # rules
-    rules(token, values)
+        rules_add = []
+        rules_value = []
+        rules_delete = []
 
-    # start
-    stream(token)
+        # get
+        for rule in self._get_rules(self).json()['data']:
+            if rule['value'] not in self._values:
+                rules_delete.append(rule['id'])
+            else:
+                rules_value.append(rule['value'])
+
+        # delete
+        if len(rules_delete) > 0:
+            resp = self._post_rules(self,{"delete":{"ids":rules_delete}})
+            print(f'DELETE STREAM RULES: {resp.text}')
+            
+        # add
+        for value in self._values:
+            if value not in rules_value:
+                rules_add.append({"value":value})
+        if len(rules_add) > 0:
+            resp = self._post_rules(self,{"add":rules_add})
+            print(f'ADD STREAM RULES: {resp.text}')
+
+        # write
+        for rule in self._get_rules(self).json()['data']:
+            self._write(self, 'rule/'+rule['id']+'.json', rule)
+
+        # STREAM ===============================================================
+
+        for line in self._get_stream(self).iter_lines():
+            if not line:
+                continue
+
+            tweet = json.loads(line)
+
+            for rule in tweet['matching_rules']:
+                self._write(self,
+                    'tweet/'+rule['id'] + \
+                        datetime.datetime.utcnow().strftime('/%Y/%m/%d/%H/%M/%Y%m%d%H%M%S%f_') + \
+                        tweet['data']['id']+'.json',
+                    tweet['data']
+                )
 
 def lambda_handler(event, context):
 
-    main(
-        twitter_token = event['token'],
+    TwitterStream(
+        token = event['token'],
         values = event['values'],
-    )
+        bucket = os.environ['BUCKET']
+    ).start()
