@@ -73,7 +73,10 @@ class TwitterStream:
 
         # write
         for rule in self._get_rules().json()['data']:
-            self._write(self, 'rule/'+rule['id']+'.json', rule)
+            self._write(
+                'rule/'+rule['id']+'.json',
+                rule
+            )
 
         # STREAM ===============================================================
 
