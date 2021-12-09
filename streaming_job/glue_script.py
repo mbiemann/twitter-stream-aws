@@ -1,3 +1,5 @@
+import sys
+
 from awsglue.context import GlueContext
 from awsglue.job import Job
 from awsglue.utils import getResolvedOptions
@@ -18,7 +20,7 @@ job_name = args['JOB_NAME']
 print('START')
 job.init(job_name,args)
 
-spark.sql('show databases')
+spark.sql('show databases').show()
 
 # End
 print('END')
