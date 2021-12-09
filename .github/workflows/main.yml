@@ -11,9 +11,7 @@ jobs:
       - name: Install Python Requirements
         shell: bash
         run: |
-          cd ./stream_function
-          pip install -r requirements.txt -t ./
-          cd ./..
+          pip install -r ./stream_function/requirements.txt -t ./stream_function/
 
       - name: AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1

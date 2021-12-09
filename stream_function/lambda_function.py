@@ -76,8 +76,11 @@ class TwitterStream:
         # write
         for rule in self._get_rules().json()['data']:
             self._write(
-                'rule/'+rule['id']+'.json',
-                rule
+                'stream/rule/'+rule['id']+'.json',
+                json.dumps({
+                    "id": rule['id'],
+                    "value": rule['value']
+                })
             )
             if rule['id'] not in self._report:
                 self._report[rule['id']] = {"value":rule['value'],"count":0}
@@ -93,11 +96,17 @@ class TwitterStream:
 
             tweet = json.loads(line)
             for rule in tweet['matching_rules']:
+                dt = datetime.datetime.utcnow()
                 self._write(
-                    'tweet/'+rule['id'] + \
-                        datetime.datetime.utcnow().strftime('/%Y/%m/%d/%H/%M/%Y%m%d%H%M%S%f_') + \
+                    'stream/tweet/'+rule['id'] + \
+                        dt.strftime('/%Y/%m/%d/%H/%M/%Y%m%d%H%M%S%f_') + \
                         tweet['data']['id']+'.json',
-                    tweet['data']
+                    json.dumps({
+                        "id": tweet['data']['id'],
+                        "text": tweet['data']['text'],
+                        "rule_id": rule['id'],
+                        "datetime": dt.isoformat()
+                    })
                 )
                 self._report[rule['id']]['count'] += 1
 
